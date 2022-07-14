@@ -1,19 +1,11 @@
-FROM ubuntu:latest
+FROM node:current-slim
 
-LABEL version=0.1 
+WORKDIR /myapp
 
-ENV NAME “CHEONHO”
-ENV AGE 43
+COPY . .
 
-WORKDIR /app
+RUN npm install
 
-ADD . /app
+EXPOSE 3000
 
-RUN apt-get update && apt-get update -y 
-RUN apt-get install curl -y
-RUN apt-get install nginx -y
-RUN service nginx start
-
-EXPOSE 80
-
-ENTRYPOINT  [“bin/dh”, “-h”]
+CMD ["npm", "start"]
