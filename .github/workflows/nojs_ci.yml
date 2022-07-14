@@ -39,3 +39,8 @@ jobs: ## job 들을 명시
           PRISMA_API_URL: https://api.anz.prismacloud.io
         with:
           api-key: ${{ secrets.BC_API_KEY }}
+       - name: Expose report
+          uses: actions/upload-artifact@v2
+          with:
+            name: SARIF results
+            path: results.sarif
