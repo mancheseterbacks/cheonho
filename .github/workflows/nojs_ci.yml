@@ -19,10 +19,6 @@ jobs: ## job 들을 명시
           npm test
         env:
           CI: true
-# 10분마다 실행 workflow
-on:
-  schedule:
-    - cron: '*/10 * * * *'
 
 # master, dev 브랜치에 push 된 경우에 실행
 on:
