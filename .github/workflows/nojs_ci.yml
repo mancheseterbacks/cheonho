@@ -67,11 +67,3 @@ jobs:
           npm install
           npm test
           npm build
-
-- name: Run Bridgecrew 
-        id: Bridgecrew
-        uses: bridgecrewio/bridgecrew-action@master 
-        env:
-          PRISMA_API_URL: https://api.anz.prismacloud.io
-        with:
-          api-key: ${{ secrets.BC_API_KEY }}
