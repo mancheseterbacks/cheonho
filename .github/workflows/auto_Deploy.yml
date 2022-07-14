@@ -2,8 +2,7 @@ name: Automatically Deployment
 
 on: [push]
 
-jobs:
-  build: 
+jobs: 
   deployment:
     runs-on: ubuntu-latest
 
@@ -28,7 +27,8 @@ jobs:
 
       # React 프로젝트를 빌드합니다.
       - name: Build React Application
-        run: npm run build
+        run: |
+          npm run build --prod
 
       # Surge에 빌드된 파일을 배포합니다.
       - name: Deploy React Application to Surge
