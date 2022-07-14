@@ -26,3 +26,22 @@ jobs: ## job 들을 명시
           PRISMA_API_URL: https://api.anz.prismacloud.io
         with:
           api-key: ${{ secrets.BC_API_KEY }}
+jobs:
+  build:
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x]
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code ## 소스코드를 checkout 하는 step
+        uses: actions/checkout@v2
+
+      - name: Cache yarn dependencies ## yarn dependencies를 cache 하는 step
+        uses: actions/cache@v1
+        id: yarn-cache
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
