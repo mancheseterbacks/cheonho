@@ -20,22 +20,6 @@ jobs: ## job 들을 명시
         env:
           CI: true
 
-# master, dev 브랜치에 push 된 경우에 실행
-on:
-  push:
-    branches: [master, dev]
-
-# master, dev 브랜치에 push 되었고,
-# js파일의 변경이 있을 때에만 트리거,
-# doc 디렉토리의 변경에는 트리거 하지 않게 하고싶은 경우
-on:
-  push:
-    branches: [master, dev]
-    paths:
-      - "**.js"
-    paths-ignore:
-      - "doc/**"
-
 jobs:
   build:
     strategy:
