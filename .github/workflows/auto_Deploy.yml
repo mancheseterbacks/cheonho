@@ -25,22 +25,16 @@ jobs:
           npm install
           npm install surge --global
 
-      # React 프로젝트를 빌드합니다.
-      build: 
-       - name: Build React Application
-         run: |
-          npm run build 
-
       # Surge에 빌드된 파일을 배포합니다.
-        - name: Deploy React Application to Surge
+      - name: Deploy React Application to Surge
           run: surge ./build ${{ secrets.SURGE_DOMAIN }} --token ${{ secrets.SURGE_TOKEN }}
          
-        - name: Checkout repo
-          uses: actions/checkout@v2
-        - name: Run Bridgecrew 
-          id: Bridgecrew
-         uses: bridgecrewio/bridgecrew-action@master 
-          env:
-            PRISMA_API_URL: https://api.anz.prismacloud.io
-          with:
-           api-key: ${{ secrets.BC_API_KEY }}
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Run Bridgecrew 
+        id: Bridgecrew
+        uses: bridgecrewio/bridgecrew-action@master 
+        env:
+          PRISMA_API_URL: https://api.anz.prismacloud.io
+        with:
+         api-key: ${{ secrets.BC_API_KEY }}
