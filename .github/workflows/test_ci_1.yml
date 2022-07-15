@@ -1,0 +1,51 @@
+name: learn-github-actions 
+
+on: 
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs: 
+  check-bats-version: 
+    runs-on: ubuntu-latest
+
+    steps: 
+      - uses: actions/checkout@v2 
+      - uses: actions/setup-node@v1 # 
+      
+      - run: npm install -g bats
+      - run: bats -v
+
+jobs:
+  job_1:
+    name: Add 3 and 7
+    runs-on: ubuntu-latest
+    steps:
+      - shell: bash
+        run: |
+          expr 3 + 7 > math-homework.txt
+      - name: Upload math result for job 1
+        uses: actions/upload-artifact@v2 # built-in 아티팩트 스토로지에 업로드 한다. 
+        with:
+          name: homework
+          path: math-homework.txt
+
+  job_2:
+    name: Multiply by 9
+    needs: job_1 # job_1이 끝난후에 실행하도록 명시했다. 
+    runs-on: windows-latest
+    steps:
+      - name: Download math result for job 1 
+        uses: actions/download-artifact@v2 # 아티팩트 스토로지에서 다운로드 한다. 
+        with:
+          name: homework
+      - shell: bash
+        run: |
+          value=`cat math-homework.txt`
+          expr $value \* 9 > math-homework.txt
+      - name: Upload math result for job 2
+        uses: actions/upload-artifact@v2
+        with:
+          name: homework
+          path: math-homework.txt
