@@ -27,7 +27,7 @@ jobs:
 
       # Surge에 빌드된 파일을 배포합니다.
       - name: Deploy React Application to Surge
-          run: surge ./build ${{ secrets.SURGE_DOMAIN }} --token ${{ secrets.SURGE_TOKEN }}
+        run: surge ./build ${{ secrets.SURGE_DOMAIN }} --token ${{ secrets.SURGE_TOKEN }}
          
       - name: Checkout repo
         uses: actions/checkout@v2
