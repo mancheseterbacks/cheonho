@@ -1,147 +1,110 @@
-name: Node.js Tests
+name: Check all English links
 
-# **What it does**: Runs our tests.
-# **Why we have it**: We want our tests to pass before merging code.
-# **Who does it impact**: Docs engineering, open-source engineering contributors.
+# **What it does**: This script once a day checks all English links and reports in issues.
+# **Why we have it**: We want to know if any links break.
+# **Who does it impact**: Docs content.
 
 on:
   workflow_dispatch:
-  pull_request:
-  push:
-    branches:
-      - gh-readonly-queue/main/**
+  schedule:
+    - cron: '40 19 * * *' # once a day at 19:40 UTC / 11:40 PST
 
 permissions:
   contents: read
-  # Needed for the 'trilom/file-changes-action' action
-  pull-requests: read
-
-# This allows a subsequently queued workflow run to interrupt previous runs
-concurrency:
-  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
-  cancel-in-progress: true
+  issues: write
 
 jobs:
-  test:
-    # Run on self-hosted if the private repo or ubuntu-latest if the public repo
-    # See pull # 17442 in the private repo for context
-    runs-on: ${{ fromJSON('["ubuntu-latest", "self-hosted"]')[github.repository == 'github/docs-internal'] }}
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        # The same array lives in test-windows.yml, so make any updates there too.
-        test-group:
-          [
-            content,
-            graphql,
-            meta,
-            rendering,
-            routing,
-            unit,
-            linting,
-            translations,
-          ]
+  check_all_english_links:
+    name: Check all links
+    if: github.repository == 'github/docs-internal'
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.DOCUBOT_READORG_REPO_WORKFLOW_SCOPES }}
+      FIRST_RESPONDER_PROJECT: Docs content first responder
+      REPORT_AUTHOR: docubot
+      REPORT_LABEL: broken link report
+      REPORT_REPOSITORY: github/docs-content
     steps:
-      # Each of these ifs needs to be repeated at each step to make sure the required check still runs
-      # Even if if doesn't do anything
-      - name: Check out repo
+      - name: Check out repo's default branch
         uses: actions/checkout@v3
-        with:
-          # Not all test suites need the LFS files. So instead, we opt to
-          # NOT clone them initially and instead, include them manually
-          # only for the test groups that we know need the files.
-          lfs: ${{ matrix.test-group == 'content' }}
-          # Enables cloning the Early Access repo later with the relevant PAT
-          persist-credentials: 'false'
-
-      - name: Figure out which docs-early-access branch to checkout, if internal repo
-        if: ${{ github.repository == 'github/docs-internal' }}
-        id: check-early-access
-        uses: actions/github-script@v6
-        env:
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-        with:
-          github-token: ${{ secrets.DOCUBOT_REPO_PAT }}
-          result-encoding: string
-          script: |
-            // If being run from a PR, this becomes 'my-cool-branch'.
-            // If run on main, with the `workflow_dispatch` action for
-            // example, the value becomes 'main'.
-            const { BRANCH_NAME } = process.env
-            try {
-              const response = await github.repos.getBranch({
-                owner: 'github',
-                repo: 'docs-early-access',
-                BRANCH_NAME,
-              })
-              console.log(`Using docs-early-access branch called '${BRANCH_NAME}'.`)
-              return BRANCH_NAME
-            } catch (err) {
-              if (err.status === 404) {
-                console.log(`There is no docs-early-access branch called '${BRANCH_NAME}' so checking out 'main' instead.`)
-                return 'main'
-              }
-              throw err
-            }
-
-      - name: Check out docs-early-access too, if internal repo
-        if: ${{ github.repository == 'github/docs-internal' }}
-        uses: actions/checkout@v3
-        with:
-          repository: github/docs-early-access
-          token: ${{ secrets.DOCUBOT_REPO_PAT }}
-          path: docs-early-access
-          ref: ${{ steps.check-early-access.outputs.result }}
-
-      - name: Merge docs-early-access repo's folders
-        if: ${{ github.repository == 'github/docs-internal' }}
-        run: |
-          mv docs-early-access/assets assets/images/early-access
-          mv docs-early-access/content content/early-access
-          mv docs-early-access/data data/early-access
-          rm -r docs-early-access
-
-      # This is necessary when LFS files where cloned but does nothing
-      # if actions/checkout was run with `lfs:false`.
-      - name: Checkout LFS objects
-        run: git lfs checkout
-
-      - name: Gather files changed
-        uses: trilom/file-changes-action@a6ca26c14274c33b15e6499323aac178af06ad4b
-        id: get_diff_files
-        with:
-          # So that `steps.get_diff_files.outputs.files` becomes
-          # a string like `foo.js path/bar.md`
-          output: ' '
-
-      - name: Insight into changed files
-        run: |
-
-          # Must to do this because the list of files can be HUGE. Especially
-          # in a repo-sync when there are lots of translation files involved.
-          echo "${{ steps.get_diff_files.outputs.files }}" > get_diff_files.txt
-
-      - name: Setup node
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 16.14.x
+          node-version: 16.13.x
           cache: npm
-
-      - name: Install dependencies
+      - name: npm ci
         run: npm ci
-
-      - name: Cache nextjs build
-        uses: actions/cache@v3
-        with:
-          path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('package*.json') }}
-
-      - name: Run build script
+      - name: npm run build
         run: npm run build
+      - name: Run script
+        run: |
+          script/check-english-links.js > broken_links.md
 
-      - name: Run tests
+      # check-english-links.js returns 0 if no links are broken, and 1 if any links
+      # are broken. When an Actions step's exit code is 1, the action run's job status
+      # is failure and the run ends. The following steps create an issue for the
+      # broken link report only if any links are broken, so `if: ${{ failure() }}`
+      # ensures the steps run despite the previous step's failure of the job.
+
+      - if: ${{ failure() }}
+        name: Get title for issue
+        id: check
+        run: echo "::set-output name=title::$(head -1 broken_links.md)"
+      - if: ${{ failure() }}
+        name: Create issue from file
+        id: broken-link-report
+        uses: peter-evans/create-issue-from-file@b4f9ee0a9d4abbfc6986601d9b1a4f8f8e74c77e
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+
+          title: ${{ steps.check.outputs.title }}
+          content-filepath: ./broken_links.md
+          repository: ${{ env.REPORT_REPOSITORY }}
+          labels: ${{ env.REPORT_LABEL }}
+      - if: ${{ failure() }}
+        name: Close and/or comment on old issues
         env:
-          DIFF_FILE: get_diff_files.txt
-          CHANGELOG_CACHE_FILE_PATH: tests/fixtures/changelog-feed.json
-        run: npm test -- tests/${{ matrix.test-group }}/
+          NEW_REPORT_URL: 'https://github.com/${{ env.REPORT_REPOSITORY }}/issues/${{ steps.broken-link-report.outputs.issue-number }}'
+        run: |
+          gh alias set list-reports "issue list \
+                                       --repo ${{ env.REPORT_REPOSITORY }} \
+                                       --author ${{ env.REPORT_AUTHOR }} \
+                                       --label '${{ env.REPORT_LABEL }}'"
+
+          # Link to the previous report from the new report that triggered this
+          # workflow run.
+
+          previous_report_url=$(gh list-reports \
+                                  --state all \
+                                  --limit 2 \
+                                  --json url \
+                                  --jq '.[].url' \
+                                  | grep -v ${{ env.NEW_REPORT_URL }} | head -1)
+
+          gh issue comment ${{ env.NEW_REPORT_URL }} --body "⬅️ [Previous report]($previous_report_url)"
+
+          # If an old report is open and assigned to someone, link to the newer
+          # report without closing the old report.
+
+          for issue_url in $(gh list-reports \
+                                  --json assignees,url \
+                                  --jq '.[] | select (.assignees != []) | .url'); do
+            if [ "$issue_url" != "${{ env.NEW_REPORT_URL }}" ]; then
+              gh issue comment $issue_url --body "➡️ [Newer report](${{ env.NEW_REPORT_URL }})"
+            fi
+          done
+
+          # Link to the newer report from any older report that is still open,
+          # then close the older report and remove it from the first responder's
+          # project board.
+
+          for issue_url in $(gh list-reports \
+                                  --search 'no:assignee' \
+                                  --json url \
+                                  --jq '.[].url'); do
+            if [ "$issue_url" != "${{ env.NEW_REPORT_URL }}" ]; then
+              gh issue comment $issue_url --body "➡️ [Newer report](${{ env.NEW_REPORT_URL }})"
+              gh issue close $issue_url
+              gh issue edit $issue_url --remove-project "${{ env.FIRST_RESPONDER_PROJECT }}"
+            fi
+          done
