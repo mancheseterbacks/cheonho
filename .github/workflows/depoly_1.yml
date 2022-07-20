@@ -1,0 +1,23 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  image: debian:stretch-slim
+  only:
+    - master
+
+  script:
+    - apt-get update && apt install -y --no-install-recommends lftp
+    - cd ./app/
+    - apt-get install -y gnupg2
+    - apt-get install curl -y
+    - apt-get install apt-transport-https ca-certificates
+    - curl -sL https://deb.nodesource.com/setup_12.x | bash -
+    - apt-get install nodejs -y
+    - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+    - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+    - apt update && apt install yarn -y
+    - yarn install
+    - yarn build-prod
+    - lftp -e  "set ftp:ssl-protect-data true; set ftp:ssl-force true; set ssl:verify-certificate no; set ftp:ssl-allow no; mirror -R ./dist/ "$REMOTE_ROUTE -p 21 -u $USER,$PSWD $HOST
