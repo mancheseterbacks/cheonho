@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: windows-latest
 
-steps:
+  steps:
   - uses: actions/checkout@v2
 
   - name: Set up .NET Core
@@ -35,10 +35,10 @@ deploy:
   runs-on: windows-latest
   needs: build
   environment:
-      name: 'Development'
+      name: 'Development  
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
-steps:
+  steps:
   - name: Download artifact from build job
     uses: actions/download-artifact@v2
     with:
