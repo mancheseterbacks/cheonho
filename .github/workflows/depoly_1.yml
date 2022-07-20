@@ -3,7 +3,7 @@ name: Build and deploy ASP.Net Core app to Azure Web App - MyApp
 on:
   push:
     branches:
-      - development
+      - main
   workflow_dispatch:
 
 jobs:
