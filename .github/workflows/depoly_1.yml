@@ -35,7 +35,7 @@ deploy:
   runs-on: windows-latest
   needs: build
   environment:
-      name: 'Development  
+      name: Development  
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
   steps:
