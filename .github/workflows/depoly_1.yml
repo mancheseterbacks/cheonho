@@ -1,37 +1,54 @@
-name: Node.js CI
+name: Build and deploy ASP.Net Core app to Azure Web App - MyApp
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - development
+  workflow_dispatch:
 
 jobs:
   build:
+    runs-on: windows-latest
 
-    runs-on: ubuntu-latest
+steps:
+  - uses: actions/checkout@v2
 
-    strategy:
-      matrix:
-        node-version: [10.x, 12.x, 14.x, 15.x]
+  - name: Set up .NET Core
+    uses: actions/setup-dotnet@v1
+    with:
+      dotnet-version: '6.0.x'
+      include-prerelease: true
 
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: npm test
-      
-      - name: Checkout repo
-        uses: actions/checkout@v2
-      - name: Run Bridgecrew 
-        id: Bridgecrew
-        uses: bridgecrewio/bridgecrew-action@master 
-        env:
-          PRISMA_API_URL: https://api.anz.prismacloud.io
-        with:
-         api-key: ${{ secrets.BC_API_KEY }}
+  - name: Build with dotnet
+    run: dotnet build --configuration Release
 
+  - name: dotnet publish
+    run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+  - name: Upload artifact for deployment job
+    uses: actions/upload-artifact@v2
+    with:
+      name: .net-app
+      path: ${{env.DOTNET_ROOT}}/myapp
+
+deploy:
+  runs-on: windows-latest
+  needs: build
+  environment:
+      name: 'Development'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+steps:
+  - name: Download artifact from build job
+    uses: actions/download-artifact@v2
+    with:
+      name: .net-app
+
+  - name: Deploy to Azure Web App
+    id: deploy-to-webapp
+    uses: azure/webapps-deploy@v2
+    with:
+      app-name: 'DevMyApp'
+      slot-name: 'Production'
+      publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_XXXXXXXXXXXXX }}
+      package: .
