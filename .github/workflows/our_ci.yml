@@ -9,7 +9,7 @@ jobs:
         with:
           node-version: 16.14.2
           cache: npm
-      - run: nmp install
+      - run: npm install
       - run: npm ci
       - run: npm test
       - run: npm run build
