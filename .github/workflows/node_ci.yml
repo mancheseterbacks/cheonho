@@ -22,11 +22,7 @@ jobs:
       uses: msimerson/node-lts-versions@v1.1.1
     - name: Use Node.js $
       uses: actions/setup-node@v3
-      env:
-        FORCE_COLOR: 0
-      with:
-        node-version: $
-        cache: 'npm'
+    - run: npm install
     - run: npm ci
     - run: npm run build --if-present
     - run: npm test
