@@ -1,7 +1,5 @@
 name: Node.js CI
-
 on: push
-name: npm build, lint, test and publish
 jobs:
   build-and-publish:
     name: build and publish
