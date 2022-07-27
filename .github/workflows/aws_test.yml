@@ -41,14 +41,3 @@ jobs:
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
         
-        steps:
-    - name: Checkout repo
-      uses: actions/checkout@v2
-
-    - name: Run Bridgecrew 
-      id: Bridgecrew
-      uses: bridgecrewio/bridgecrew-action@master 
-      env:
-        PRISMA_API_URL: https://api.anz.prismacloud.io
-      with:
-        api-key: ${{ secrets.BC_API_KEY }}
