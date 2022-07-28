@@ -37,7 +37,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       # npm install for ci
-      - run: npm insatll
+      - run: npm install
       - run: npm ci
 
       # Build
