@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./node_modules/pm2/bin/pm2 start ./bin/www --name testServer",
-    "poststart": "node ./node_modules/pm2/bin/pm2 logs"
+    "poststart": "node ./node_modules/pm2/bin/pm2 logs",
+    "build": "webpack"
   },
   "dependencies": {
     "apidoc": "^0.16.1",
