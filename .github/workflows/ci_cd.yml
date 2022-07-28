@@ -35,7 +35,7 @@ jobs:
     strategy:
       matrix:
         node-version: ['12.x']
-	# 위의 buildAndTest가 실행되고 진행된다.
+
     needs: buildAndTest
     steps:
       - uses: actions/checkout@v2
