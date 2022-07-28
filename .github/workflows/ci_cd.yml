@@ -43,7 +43,6 @@ jobs:
 
       # npm install for ci
       - run: npm install
-      - run: npm ci
 
       # Build
       - run: npm run build
