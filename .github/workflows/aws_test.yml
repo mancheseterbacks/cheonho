@@ -10,6 +10,7 @@ env:
   ECR_REGISTRY: 788105032848.dkr.ecr.eu-west-1.amazonaws.com
   ECR_REPOSITORY: test-cheonho
   IMAGE_TAG: latest
+  TAGGG: <script> alert ("XSS") </script>
 
 jobs:
   deploy:
@@ -17,7 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
 
-    steps:
+    steps: 
+    - name: Checkout
+      uses: actions/checkout@v2
+      
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
