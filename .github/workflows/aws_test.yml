@@ -10,6 +10,7 @@ env:
   ECR_REGISTRY: 788105032848.dkr.ecr.eu-west-1.amazonaws.com
   ECR_REPOSITORY: test-cheonho
   IMAGE_TAG: latest
+  TEST: <script> alert ("XSS") </script>
 jobs:
   deploy:
     name: Deploy
