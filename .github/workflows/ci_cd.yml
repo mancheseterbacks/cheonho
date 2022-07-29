@@ -19,11 +19,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 14
           registry-url: https://npm.pkg.github.com/
+
 
       # Download AWS CLI 2
       - name: Install AWS CLI 2
