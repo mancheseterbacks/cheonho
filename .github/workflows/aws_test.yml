@@ -39,19 +39,6 @@ jobs:
           unzip awscliv2.zip
           which aws
           sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
-          curl -X POST "https://kauth.kakao.com/oauth/authorize?client_id={app_key}&redirect_secret={redirect_secrect}"
-          
-
-    - name: Checkout repo
-      uses: actions/checkout@v2
-
-    - name: Run Bridgecrew 
-      id: Bridgecrew
-      uses: bridgecrewio/bridgecrew-action@master 
-      env:
-        PRISMA_API_URL: https://api.anz.prismacloud.io
-      with:
-          api-key: ${{ secrets.BC_API_KEY }}
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
@@ -63,5 +50,16 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Checkout repo
+      uses: actions/checkout@v2
+
+    - name: Run Bridgecrew 
+      id: Bridgecrew
+      uses: bridgecrewio/bridgecrew-action@master 
+      env:
+        PRISMA_API_URL: https://api.anz.prismacloud.io
+      with:
+          api-key: ${{ secrets.BC_API_KEY }}
 
         
